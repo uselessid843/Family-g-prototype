@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Family Financial Goals 🏦</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: #eef2ff;
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+
+    /* ── HEADER ─────────────────────────────────────── */
+    .site-header {
+      background: linear-gradient(135deg, #1e3a8a 0%, #4f46e5 60%, #7c3aed 100%);
+      color: white;
+      text-align: center;
+      padding: 48px 20px 64px;
+      position: relative;
+    }
+
+    .site-header h1 {
+      font-size: clamp(1.7rem, 5vw, 2.6rem);
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .site-header p {
+      opacity: 0.75;
+      margin-top: 8px;
+      font-size: 1.05rem;
+    }
+
+    .site-header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 48px;
+      background: #eef2ff;
+      clip-path: ellipse(60% 100% at 50% 100%);
+    }
+
+    /* ── GRID ───────────────────────────────────────── */
+    .goals-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      max-width: 1020px;
+      margin: 40px auto 0;
+      padding: 0 20px;
+    }
+
+    @media (max-width: 740px) {
+      .goals-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── CARD ───────────────────────────────────────── */
+    .card {
+      background: white;
+      border-radius: 28px;
+      padding: 32px;
+      box-shadow: 0 2px 8px rgba(79,70,229,0.06), 0 12px 40px rgba(79,70,229,0.10);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #1e293b;
+    }
+
+    .card-subtitle {
+      font-size: 0.83rem;
+      color: #94a3b8;
+      margin-top: 3px;
+    }
+
+    .edit-btn {
+      flex-shrink: 0;
+      background: none;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 5px 11px;
+      font-size: 0.78rem;
+      color: #94a3b8;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .edit-btn:hover {
+      border-color: #cbd5e1;
+      color: #64748b;
+      background: #f8fafc;
+    }
+
+    /* ── BALANCE DISPLAY ────────────────────────────── */
+    .balance-display {
+      margin: 24px 0 18px;
+    }
+
+    .balance-amount {
+      font-size: clamp(2.2rem, 5vw, 3.2rem);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -1.5px;
+    }
+
+    .balance-label {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      margin-top: 5px;
+    }
+
+    .color-green  { color: #059669; }
+    .color-purple { color: #7c3aed; }
+
+    /* ── PROGRESS BAR ───────────────────────────────── */
+    .progress-section { margin: 0 0 18px; }
+
+    .progress-wrapper {
+      position: relative;
+      padding-bottom: 28px;
+    }
+
+    .progress-wrapper.no-labels { padding-bottom: 0; }
+
+    .progress-track {
+      height: 22px;
+      background: #f1f5f9;
+      border-radius: 11px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 11px;
+      width: 0;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.25) 100%);
+      border-radius: 11px;
+    }
+
+    .savings-fill  { background: linear-gradient(90deg, #34d399, #10b981, #059669); }
+    .loan-fill     { background: linear-gradient(90deg, #c4b5fd, #8b5cf6, #7c3aed); }
+
+    /* milestone markers */
+    .milestone-marker {
+      position: absolute;
+      top: 0;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .marker-line {
+      width: 2px;
+      height: 22px;
+      background: rgba(0,0,0,0.18);
+    }
+
+    .marker-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #94a3b8;
+      white-space: nowrap;
+      margin-top: 5px;
+    }
+
+    .milestone-marker.reached .marker-label { color: #059669; }
+
+    /* ── STATS ROW ──────────────────────────────────── */
+    .stats-row {
+      display: flex;
+      gap: 10px;
+      margin: 0 0 18px;
+    }
+
+    .stat {
+      flex: 1;
+      background: #f8fafc;
+      border-radius: 14px;
+      padding: 12px 8px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1rem;
+      font-weight: 800;
+      color: #1e293b;
+    }
+
+    .stat-label {
+      font-size: 0.68rem;
+      color: #94a3b8;
+      margin-top: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── BADGES ─────────────────────────────────────── */
+    .badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 0 0 20px;
+    }
+
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 13px;
+      border-radius: 100px;
+      font-size: 0.79rem;
+      font-weight: 700;
+      background: #f1f5f9;
+      color: #94a3b8;
+      border: 2px solid #e2e8f0;
+      transition: all 0.35s;
+    }
+
+    .badge.earned {
+      background: #d1fae5;
+      color: #065f46;
+      border-color: #6ee7b7;
+    }
+
+    /* ── ACTION BUTTON ──────────────────────────────── */
+    .action-btn {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 16px;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.15s;
+      letter-spacing: 0.01em;
+    }
+
+    .action-btn:active { transform: scale(0.98); }
+
+    .btn-green  { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+    .btn-green:hover  { background: linear-gradient(135deg, #059669, #047857); }
+
+    .btn-purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; }
+    .btn-purple:hover { background: linear-gradient(135deg, #7c3aed, #6d28d9); }
+
+    /* ── INLINE FORM ────────────────────────────────── */
+    .inline-form {
+      display: none;
+      margin-top: 12px;
+      animation: slideDown 0.2s ease;
+    }
+
+    .inline-form.open { display: block; }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .inline-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .inline-form input[type="number"] {
+      flex: 1;
+      padding: 13px 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 13px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #1e293b;
+      outline: none;
+      min-width: 0;
+      transition: border-color 0.15s;
+      -moz-appearance: textfield;
+    }
+
+    .inline-form input[type="number"]::-webkit-inner-spin-button,
+    .inline-form input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+    .inline-form input[type="number"]:focus { border-color: #a5b4fc; }
+
+    .inline-form .confirm-btn {
+      padding: 13px 18px;
+      border: none;
+      border-radius: 13px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      cursor: pointer;
+      background: #1e293b;
+      color: white;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    .inline-form .confirm-btn:hover { background: #0f172a; }
+
+    .cancel-link {
+      display: block;
+      text-align: center;
+      margin-top: 8px;
+      font-size: 0.82rem;
+      color: #cbd5e1;
+      cursor: pointer;
+      text-decoration: underline;
+      transition: color 0.15s;
+    }
+
+    .cancel-link:hover { color: #94a3b8; }
+
+    /* ── SETUP STATE ────────────────────────────────── */
+    .setup-state {
+      padding: 12px 0 8px;
+      text-align: center;
+    }
+
+    .setup-emoji { font-size: 3.2rem; margin-bottom: 14px; }
+
+    .setup-state h3 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #1e293b;
+      margin-bottom: 8px;
+    }
+
+    .setup-state p {
+      font-size: 0.88rem;
+      color: #64748b;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .setup-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .setup-row input[type="number"] {
+      flex: 1;
+      padding: 15px 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 14px;
+      font-size: 1.1rem;
+      font-weight: 800;
+      text-align: center;
+      color: #1e293b;
+      outline: none;
+      min-width: 0;
+      -moz-appearance: textfield;
+      transition: border-color 0.15s;
+    }
+
+    .setup-row input[type="number"]::-webkit-inner-spin-button,
+    .setup-row input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+    .setup-row input[type="number"]:focus { border-color: #a5b4fc; }
+
+    .setup-row .start-btn {
+      padding: 15px 20px;
+      border: none;
+      border-radius: 14px;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      color: white;
+      transition: opacity 0.15s;
+      white-space: nowrap;
+    }
+
+    .setup-row .start-btn:hover { opacity: 0.88; }
+
+    /* ── PAYOFF DATE ────────────────────────────────── */
+    .payoff-date {
+      background: #faf5ff;
+      border: 1.5px solid #e9d5ff;
+      border-radius: 14px;
+      padding: 11px 16px;
+      font-size: 0.86rem;
+      color: #6d28d9;
+      font-weight: 600;
+      text-align: center;
+      margin: 0 0 20px;
+    }
+
+    .payoff-date.paid {
+      background: #d1fae5;
+      border-color: #6ee7b7;
+      color: #065f46;
+    }
+
+    /* ── CELEBRATION OVERLAY ────────────────────────── */
+    #cel-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      padding: 20px;
+    }
+
+    #cel-overlay.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .cel-box {
+      background: white;
+      border-radius: 32px;
+      padding: 52px 40px;
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+      animation: popIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.2);
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.4); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    .cel-emoji { font-size: 4.5rem; margin-bottom: 16px; }
+
+    .cel-box h2 {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: #1e293b;
+      margin-bottom: 10px;
+      letter-spacing: -0.5px;
+    }
+
+    .cel-box p {
+      color: #64748b;
+      margin-bottom: 28px;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .cel-btn {
+      padding: 15px 36px;
+      border: none;
+      border-radius: 16px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      cursor: pointer;
+      color: white;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      transition: all 0.15s;
+    }
+
+    .cel-btn:hover { background: linear-gradient(135deg, #d97706, #b45309); }
+    .cel-btn:active { transform: scale(0.97); }
+
+    /* ── CONFETTI CANVAS ────────────────────────────── */
+    #confetti {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 999;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="confetti"></canvas>
+
+  <!-- Celebration Modal -->
+  <div id="cel-overlay">
+    <div class="cel-box">
+      <div class="cel-emoji" id="cel-emoji"></div>
+      <h2 id="cel-title"></h2>
+      <p id="cel-msg"></p>
+      <button class="cel-btn" onclick="closeCelebration()">Let's go! 🎉</button>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <h1>🏦 Family Financial Goals</h1>
+    <p>Track your progress · celebrate every win</p>
+  </header>
+
+  <div class="goals-grid">
+    <div class="card" id="savings-card"></div>
+    <div class="card" id="loan-card"></div>
+  </div>
+
+  <script>
+    // ── CONSTANTS ─────────────────────────────────────────────
+    const SAVINGS_KEY = 'family_goals_v2_savings';
+    const LOAN_KEY    = 'family_goals_v2_loan';
+    const SAVINGS_TARGET = 120000;
+    const LOAN_MONTHLY   = 2200;
+
+    const MILESTONES = [
+      { amount: 50000,  label: 'Emergency Fund',  emoji: '🛡️' },
+      { amount: 120000, label: 'Down Payment',     emoji: '🏠' }
+    ];
+
+    // ── STATE ─────────────────────────────────────────────────
+    let savings = JSON.parse(localStorage.getItem(SAVINGS_KEY) || 'null');
+    let loan    = JSON.parse(localStorage.getItem(LOAN_KEY)    || 'null');
+
+    // ── PERSISTENCE ───────────────────────────────────────────
+    const saveSavings = () => localStorage.setItem(SAVINGS_KEY, JSON.stringify(savings));
+    const saveLoan    = () => localStorage.setItem(LOAN_KEY,    JSON.stringify(loan));
+
+    // ── FORMATTING ────────────────────────────────────────────
+    const $ = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
+    const pct = (a, b) => b === 0 ? 100 : Math.min(100, Math.round((a / b) * 1000) / 10);
+
+    function addMonths(date, n) {
+      const d = new Date(date);
+      d.setMonth(d.getMonth() + n);
+      return d;
+    }
+
+    function fmtDate(d) {
+      return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    }
+
+    // ── RENDER: SAVINGS ───────────────────────────────────────
+    function renderSavings() {
+      const card = document.getElementById('savings-card');
+
+      if (!savings) {
+        card.innerHTML = `
+          <div class="card-header">
+            <div>
+              <div class="card-title">💰 Family Savings</div>
+              <div class="card-subtitle">Emergency Fund + House Down Payment</div>
+            </div>
+          </div>
+          <div class="setup-state">
+            <div class="setup-emoji">🎯</div>
+            <h3>Let's get started!</h3>
+            <p>Enter your current savings balance to begin tracking toward <strong>${$(SAVINGS_TARGET)}</strong>.</p>
+            <div class="setup-row">
+              <input type="number" id="sv-setup" placeholder="e.g. 12500" min="0" />
+              <button class="start-btn" style="background: linear-gradient(135deg,#10b981,#059669);" onclick="setupSavings()">Start →</button>
+            </div>
+          </div>`;
+        document.getElementById('sv-setup').focus();
+        document.getElementById('sv-setup').addEventListener('keydown', e => { if (e.key === 'Enter') setupSavings(); });
+        return;
+      }
+
+      const bal  = savings.currentBalance;
+      const prog = pct(bal, SAVINGS_TARGET);
+
+      const milestonesHtml = MILESTONES.map(m => `
+        <div class="badge ${bal >= m.amount ? 'earned' : ''}">
+          ${bal >= m.amount ? '✅' : '⬜'} ${m.label}
+        </div>`).join('');
+
+      // marker only at $50k (not at $120k — that's the end of the bar)
+      const m50pct = (50000 / SAVINGS_TARGET) * 100;
+      const m50reached = bal >= 50000;
+
+      card.innerHTML = `
+        <div class="card-header">
+          <div>
+            <div class="card-title">💰 Family Savings</div>
+            <div class="card-subtitle">Emergency Fund + House Down Payment</div>
+          </div>
+          <button class="edit-btn" onclick="editSavings()">✏️ Edit</button>
+        </div>
+
+        <div class="balance-display">
+          <div class="balance-amount color-green">${$(bal)}</div>
+          <div class="balance-label">saved toward ${$(SAVINGS_TARGET)}</div>
+        </div>
+
+        <div class="progress-section">
+          <div class="progress-wrapper">
+            <div class="progress-track">
+              <div class="progress-fill savings-fill" id="sv-bar" style="width:0"></div>
+            </div>
+            <div class="milestone-marker ${m50reached ? 'reached' : ''}" style="left:${m50pct}%">
+              <div class="marker-line"></div>
+              <div class="marker-label">${$(50000)} — Emergency Fund</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat">
+            <div class="stat-value">${prog}%</div>
+            <div class="stat-label">Complete</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">${$(bal)}</div>
+            <div class="stat-label">Saved</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">${$(Math.max(0, SAVINGS_TARGET - bal))}</div>
+            <div class="stat-label">Remaining</div>
+          </div>
+        </div>
+
+        <div class="badges">${milestonesHtml}</div>
+
+        <div class="action-area">
+          <button class="action-btn btn-green" onclick="toggleForm('sv-form')">＋ Add Savings</button>
+          <div class="inline-form" id="sv-form">
+            <div class="inline-row">
+              <input type="number" id="sv-amount" placeholder="Amount, e.g. 500" min="1" />
+              <button class="confirm-btn" onclick="addSavings()">Add</button>
+            </div>
+            <span class="cancel-link" onclick="toggleForm('sv-form')">cancel</span>
+          </div>
+        </div>`;
+
+      // animate bar in
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        const bar = document.getElementById('sv-bar');
+        if (bar) bar.style.width = prog + '%';
+      }));
+
+      document.getElementById('sv-amount')?.addEventListener('keydown', e => { if (e.key === 'Enter') addSavings(); });
+    }
+
+    // ── RENDER: LOAN ──────────────────────────────────────────
+    function renderLoan() {
+      const card = document.getElementById('loan-card');
+
+      if (!loan) {
+        card.innerHTML = `
+          <div class="card-header">
+            <div>
+              <div class="card-title">📉 Lauren's Loan</div>
+              <div class="card-subtitle">Paydown tracker · $${LOAN_MONTHLY.toLocaleString()}/month</div>
+            </div>
+          </div>
+          <div class="setup-state">
+            <div class="setup-emoji">💜</div>
+            <h3>Set up loan tracking</h3>
+            <p>Enter the current outstanding loan balance to start tracking payments at <strong>$${LOAN_MONTHLY.toLocaleString()}/month</strong>.</p>
+            <div class="setup-row">
+              <input type="number" id="ln-setup" placeholder="e.g. 21458" min="0" />
+              <button class="start-btn" style="background: linear-gradient(135deg,#8b5cf6,#7c3aed);" onclick="setupLoan()">Start →</button>
+            </div>
+          </div>`;
+        document.getElementById('ln-setup').focus();
+        document.getElementById('ln-setup').addEventListener('keydown', e => { if (e.key === 'Enter') setupLoan(); });
+        return;
+      }
+
+      const bal      = loan.currentBalance;
+      const orig     = loan.originalBalance;
+      const paid     = orig - bal;
+      const paidPct  = pct(paid, orig);
+      const remPct   = 100 - paidPct;           // countdown: starts 100, drains to 0
+      const mthsLeft = bal > 0 ? Math.ceil(bal / LOAN_MONTHLY) : 0;
+      const payoffDt = bal > 0 ? fmtDate(addMonths(new Date(), mthsLeft)) : null;
+
+      const payoffHtml = bal === 0
+        ? `<div class="payoff-date paid">🎉 Loan fully paid off! Congratulations!</div>`
+        : `<div class="payoff-date">📅 Estimated payoff: <strong>${payoffDt}</strong> · ${mthsLeft} month${mthsLeft !== 1 ? 's' : ''} at ${$(LOAN_MONTHLY)}/mo</div>`;
+
+      card.innerHTML = `
+        <div class="card-header">
+          <div>
+            <div class="card-title">📉 Lauren's Loan</div>
+            <div class="card-subtitle">Paydown tracker · $${LOAN_MONTHLY.toLocaleString()}/month</div>
+          </div>
+          <button class="edit-btn" onclick="editLoan()">✏️ Edit</button>
+        </div>
+
+        <div class="balance-display">
+          <div class="balance-amount color-purple">${$(bal)}</div>
+          <div class="balance-label">${bal === 0 ? 'fully paid off 🎊' : 'remaining balance'}</div>
+        </div>
+
+        <div class="progress-section">
+          <div class="progress-wrapper no-labels">
+            <div class="progress-track">
+              <div class="progress-fill loan-fill" id="ln-bar" style="width:0"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat">
+            <div class="stat-value">${paidPct}%</div>
+            <div class="stat-label">Paid Off</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">${$(paid)}</div>
+            <div class="stat-label">Paid So Far</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">${mthsLeft}</div>
+            <div class="stat-label">Months Left</div>
+          </div>
+        </div>
+
+        ${payoffHtml}
+
+        <div class="action-area">
+          ${bal > 0 ? `
+          <button class="action-btn btn-purple" onclick="toggleForm('ln-form')">💸 Log Payment</button>
+          <div class="inline-form" id="ln-form">
+            <div class="inline-row">
+              <input type="number" id="ln-amount" placeholder="Payment, e.g. ${LOAN_MONTHLY}" min="1" />
+              <button class="confirm-btn" onclick="logPayment()">Log</button>
+            </div>
+            <span class="cancel-link" onclick="toggleForm('ln-form')">cancel</span>
+          </div>` : ''}
+        </div>`;
+
+      // animate bar in
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        const bar = document.getElementById('ln-bar');
+        if (bar) bar.style.width = remPct + '%';
+      }));
+
+      document.getElementById('ln-amount')?.addEventListener('keydown', e => { if (e.key === 'Enter') logPayment(); });
+    }
+
+    // ── SETUP ─────────────────────────────────────────────────
+    function setupSavings() {
+      const val = parseFloat(document.getElementById('sv-setup').value);
+      if (isNaN(val) || val < 0) { shake('sv-setup'); return; }
+      savings = {
+        currentBalance: val,
+        milestonesReached: MILESTONES.filter(m => val >= m.amount).map(m => m.amount)
+      };
+      saveSavings();
+      renderSavings();
+    }
+
+    function setupLoan() {
+      const val = parseFloat(document.getElementById('ln-setup').value);
+      if (isNaN(val) || val < 0) { shake('ln-setup'); return; }
+      loan = { currentBalance: val, originalBalance: val };
+      saveLoan();
+      renderLoan();
+    }
+
+    // ── EDIT ──────────────────────────────────────────────────
+    function editSavings() {
+      const cur = savings?.currentBalance ?? '';
+      const raw = prompt('Update your current savings balance:', cur);
+      if (raw === null || raw.trim() === '') return;
+      const val = parseFloat(raw.replace(/[$,\s]/g, ''));
+      if (isNaN(val) || val < 0) return;
+      savings.currentBalance = val;
+      savings.milestonesReached = MILESTONES.filter(m => val >= m.amount).map(m => m.amount);
+      saveSavings();
+      renderSavings();
+    }
+
+    function editLoan() {
+      const curBal = prompt('Enter the current loan balance:', loan?.currentBalance ?? '');
+      if (curBal === null || curBal.trim() === '') return;
+      const bal = parseFloat(curBal.replace(/[$,\s]/g, ''));
+      if (isNaN(bal) || bal < 0) return;
+
+      const curOrig = prompt('Enter the original loan balance (used for % progress):', loan?.originalBalance ?? bal);
+      if (curOrig === null || curOrig.trim() === '') return;
+      const orig = parseFloat(curOrig.replace(/[$,\s]/g, ''));
+      if (isNaN(orig) || orig <= 0) return;
+
+      loan.currentBalance  = bal;
+      loan.originalBalance = Math.max(orig, bal);
+      saveLoan();
+      renderLoan();
+    }
+
+    // ── TOGGLE FORM ───────────────────────────────────────────
+    function toggleForm(id) {
+      const form = document.getElementById(id);
+      if (!form) return;
+      form.classList.toggle('open');
+      if (form.classList.contains('open')) {
+        form.querySelector('input')?.focus();
+      }
+    }
+
+    // ── ADD SAVINGS ───────────────────────────────────────────
+    function addSavings() {
+      const input  = document.getElementById('sv-amount');
+      const amount = parseFloat(input.value);
+      if (isNaN(amount) || amount <= 0) { shake('sv-amount'); return; }
+
+      const prevBal = savings.currentBalance;
+      savings.currentBalance = Math.min(prevBal + amount, SAVINGS_TARGET);
+      const newBal = savings.currentBalance;
+
+      let celebration = null;
+      for (const m of MILESTONES) {
+        if (prevBal < m.amount && newBal >= m.amount && !savings.milestonesReached.includes(m.amount)) {
+          savings.milestonesReached.push(m.amount);
+          celebration = m;
+        }
+      }
+
+      saveSavings();
+      renderSavings();
+
+      if (celebration) {
+        if (celebration.amount === SAVINGS_TARGET) {
+          celebrate('🏆', 'Goals Complete!', `You've hit ${$(SAVINGS_TARGET)} — your Emergency Fund and House Down Payment goals are both fully funded!`);
+        } else {
+          celebrate('🛡️', 'Emergency Fund Done!', `You've saved ${$(celebration.amount)}! Your emergency fund is fully funded. On to the down payment!`);
+        }
+        launchConfetti(4500);
+      }
+    }
+
+    // ── LOG LOAN PAYMENT ──────────────────────────────────────
+    function logPayment() {
+      const input  = document.getElementById('ln-amount');
+      const amount = parseFloat(input.value);
+      if (isNaN(amount) || amount <= 0) { shake('ln-amount'); return; }
+
+      const prevBal = loan.currentBalance;
+      loan.currentBalance = Math.max(0, prevBal - amount);
+      saveLoan();
+      renderLoan();
+
+      if (prevBal > 0 && loan.currentBalance === 0) {
+        celebrate('🎊', 'Loan Paid Off!', "Lauren's loan is completely paid off! That's incredible — you're officially debt-free on this one!");
+        launchConfetti(6000);
+      }
+    }
+
+    // ── CELEBRATION ───────────────────────────────────────────
+    function celebrate(emoji, title, msg) {
+      document.getElementById('cel-emoji').textContent  = emoji;
+      document.getElementById('cel-title').textContent  = title;
+      document.getElementById('cel-msg').textContent    = msg;
+      document.getElementById('cel-overlay').classList.add('show');
+    }
+
+    function closeCelebration() {
+      document.getElementById('cel-overlay').classList.remove('show');
+    }
+
+    // close on backdrop click
+    document.getElementById('cel-overlay').addEventListener('click', e => {
+      if (e.target === document.getElementById('cel-overlay')) closeCelebration();
+    });
+
+    // ── CONFETTI ──────────────────────────────────────────────
+    function launchConfetti(duration) {
+      const canvas = document.getElementById('confetti');
+      const ctx    = canvas.getContext('2d');
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+      canvas.style.display = 'block';
+
+      const COLORS = ['#f59e0b','#10b981','#8b5cf6','#ef4444','#3b82f6','#ec4899','#34d399','#fbbf24','#c084fc'];
+      const particles = Array.from({ length: 220 }, () => ({
+        x:     Math.random() * canvas.width,
+        y:     -15 - Math.random() * 220,
+        vx:    (Math.random() - 0.5) * 7,
+        vy:    Math.random() * 4 + 1.5,
+        w:     Math.random() * 11 + 5,
+        h:     Math.random() * 6 + 3,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        rot:   Math.random() * Math.PI * 2,
+        rotV:  (Math.random() - 0.5) * 0.18,
+        wob:   Math.random() * Math.PI * 2,
+        wobV:  Math.random() * 0.06
+      }));
+
+      const t0 = Date.now();
+
+      function frame() {
+        const elapsed = Date.now() - t0;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const alpha = elapsed > duration - 1200 ? Math.max(0, (duration - elapsed) / 1200) : 1;
+
+        for (const p of particles) {
+          p.x   += p.vx + Math.sin(p.wob) * 0.6;
+          p.y   += p.vy;
+          p.vy  += 0.07;
+          p.rot += p.rotV;
+          p.wob += p.wobV;
+
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+        }
+
+        if (elapsed < duration) requestAnimationFrame(frame);
+        else canvas.style.display = 'none';
+      }
+
+      requestAnimationFrame(frame);
+    }
+
+    // ── SHAKE ANIMATION ───────────────────────────────────────
+    function shake(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.style.animation = 'none';
+      el.style.borderColor = '#f87171';
+      setTimeout(() => { el.style.borderColor = ''; }, 800);
+    }
+
+    // ── INIT ──────────────────────────────────────────────────
+    renderSavings();
+    renderLoan();
+  </script>
+</body>
+</html>
