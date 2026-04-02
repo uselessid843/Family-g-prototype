@@ -524,10 +524,16 @@
     const LOAN_KEY    = 'family_goals_v2_loan';
     const SAVINGS_TARGET = 120000;
     const LOAN_MONTHLY   = 2500;
+    const LOAN_TARGET    = 53000;
 
     const MILESTONES = [
       { amount: 50000,  label: 'Emergency Fund',  emoji: '🛡️' },
       { amount: 120000, label: 'Down Payment',     emoji: '🏠' }
+    ];
+
+    const LOAN_MILESTONES = [
+      { amount: 22000, label: 'First Loan Cleared', emoji: '🎯' },
+      { amount: 53000, label: 'Both Loans Paid Off', emoji: '🏁' }
     ];
 
     // ── STATE ─────────────────────────────────────────────────
@@ -662,15 +668,15 @@
           <div class="card-header">
             <div>
               <div class="card-title">📉 Lauren's Loan</div>
-              <div class="card-subtitle">Paydown tracker · $${LOAN_MONTHLY.toLocaleString()}/month</div>
+                  <div class="card-subtitle">Paydown tracker · $${LOAN_MONTHLY.toLocaleString()}/month toward $${LOAN_TARGET.toLocaleString()}</div>
             </div>
           </div>
           <div class="setup-state">
             <div class="setup-emoji">💜</div>
             <h3>Set up loan tracking</h3>
-            <p>Enter the current outstanding loan balance to start tracking payments at <strong>$${LOAN_MONTHLY.toLocaleString()}/month</strong>.</p>
+            <p>Enter the current outstanding loan balance to start tracking your paydown toward <strong>$${LOAN_TARGET.toLocaleString()}</strong> at $${LOAN_MONTHLY.toLocaleString()}/month.</p>
             <div class="setup-row">
-              <input type="number" id="ln-setup" placeholder="e.g. $21,458" min="0" />
+              <input type="number" id="ln-setup" placeholder="e.g. $53,000" min="0" />
               <button class="start-btn" style="background: linear-gradient(135deg,#8b5cf6,#7c3aed);" onclick="setupLoan()">Start →</button>
             </div>
           </div>`;
@@ -679,23 +685,39 @@
         return;
       }
 
+      // migrate old state
+      if (!loan.milestonesReached) {
+        const _paid = loan.originalBalance - loan.currentBalance;
+        loan.milestonesReached = LOAN_MILESTONES.filter(m => _paid >= m.amount).map(m => m.amount);
+        saveLoan();
+      }
+
       const bal      = loan.currentBalance;
       const orig     = loan.originalBalance;
       const paid     = orig - bal;
       const paidPct  = pct(paid, orig);
-      const remPct   = 100 - paidPct;           // countdown: starts 100, drains to 0
       const mthsLeft = bal > 0 ? Math.ceil(bal / LOAN_MONTHLY) : 0;
       const payoffDt = bal > 0 ? fmtDate(addMonths(new Date(), mthsLeft)) : null;
 
+      // milestone badges — earned when amount PAID passes each threshold
+      const loanMilestonesHtml = LOAN_MILESTONES.map(m => `
+        <div class="badge ${paid >= m.amount ? 'earned' : ''}">
+          ${m.emoji} ${paid >= m.amount ? '✅' : '⬜'} ${m.label}
+        </div>`).join('');
+
+      // bar marker only at $22k paid (41.5% along the filling bar)
+      const m22pct     = (22000 / orig) * 100;
+      const m22reached = paid >= 22000;
+
       const payoffHtml = bal === 0
-        ? `<div class="payoff-date paid">🎉 Loan fully paid off! Congratulations!</div>`
+        ? `<div class="payoff-date paid">🏁 Both loans fully paid off! Congratulations!</div>`
         : `<div class="payoff-date">📅 Estimated payoff: <strong>${payoffDt}</strong> · ${mthsLeft} month${mthsLeft !== 1 ? 's' : ''} at ${$(LOAN_MONTHLY)}/mo</div>`;
 
       card.innerHTML = `
         <div class="card-header">
           <div>
             <div class="card-title">📉 Lauren's Loan</div>
-            <div class="card-subtitle">Paydown tracker · $${LOAN_MONTHLY.toLocaleString()}/month</div>
+            <div class="card-subtitle">Paydown tracker · $${LOAN_MONTHLY.toLocaleString()}/month toward $${orig.toLocaleString()}</div>
           </div>
           <button class="edit-btn" onclick="editLoan()">✏️ Edit</button>
         </div>
@@ -706,9 +728,13 @@
         </div>
 
         <div class="progress-section">
-          <div class="progress-wrapper no-labels">
+          <div class="progress-wrapper">
             <div class="progress-track">
               <div class="progress-fill loan-fill" id="ln-bar" style="width:0"></div>
+            </div>
+            <div class="milestone-marker ${m22reached ? 'reached' : ''}" style="left:${m22pct}%">
+              <div class="marker-line"></div>
+              <div class="marker-label">🎯 ${$(22000)} — First Loan</div>
             </div>
           </div>
         </div>
@@ -728,6 +754,8 @@
           </div>
         </div>
 
+        <div class="badges">${loanMilestonesHtml}</div>
+
         ${payoffHtml}
 
         <div class="action-area">
@@ -735,17 +763,17 @@
           <button class="action-btn btn-purple" onclick="toggleForm('ln-form')">💸 Log Payment</button>
           <div class="inline-form" id="ln-form">
             <div class="inline-row">
-              <input type="number" id="ln-amount" placeholder="Payment, e.g. ${LOAN_MONTHLY}" min="1" />
+              <input type="number" id="ln-amount" placeholder="e.g. $${LOAN_MONTHLY.toLocaleString()}" min="1" />
               <button class="confirm-btn" onclick="logPayment()">Log</button>
             </div>
             <span class="cancel-link" onclick="toggleForm('ln-form')">cancel</span>
           </div>` : ''}
         </div>`;
 
-      // animate bar in
+      // bar fills up (paid direction), 0 → paidPct
       requestAnimationFrame(() => requestAnimationFrame(() => {
         const bar = document.getElementById('ln-bar');
-        if (bar) bar.style.width = remPct + '%';
+        if (bar) bar.style.width = paidPct + '%';
       }));
 
       document.getElementById('ln-amount')?.addEventListener('keydown', e => { if (e.key === 'Enter') logPayment(); });
@@ -766,7 +794,13 @@
     function setupLoan() {
       const val = parseFloat(document.getElementById('ln-setup').value);
       if (isNaN(val) || val < 0) { shake('ln-setup'); return; }
-      loan = { currentBalance: val, originalBalance: val };
+      const orig = Math.max(val, LOAN_TARGET);
+      const paid = orig - val;
+      loan = {
+        currentBalance: val,
+        originalBalance: orig,
+        milestonesReached: LOAN_MILESTONES.filter(m => paid >= m.amount).map(m => m.amount)
+      };
       saveLoan();
       renderLoan();
     }
@@ -795,8 +829,10 @@
       const orig = parseFloat(curOrig.replace(/[$,\s]/g, ''));
       if (isNaN(orig) || orig <= 0) return;
 
-      loan.currentBalance  = bal;
-      loan.originalBalance = Math.max(orig, bal);
+      loan.currentBalance   = bal;
+      loan.originalBalance  = Math.max(orig, bal);
+      const editedPaid = loan.originalBalance - loan.currentBalance;
+      loan.milestonesReached = LOAN_MILESTONES.filter(m => editedPaid >= m.amount).map(m => m.amount);
       saveLoan();
       renderLoan();
     }
@@ -848,13 +884,33 @@
       const amount = parseFloat(input.value);
       if (isNaN(amount) || amount <= 0) { shake('ln-amount'); return; }
 
-      const prevBal = loan.currentBalance;
+      const prevBal  = loan.currentBalance;
       loan.currentBalance = Math.max(0, prevBal - amount);
+      const newBal   = loan.currentBalance;
+      const prevPaid = loan.originalBalance - prevBal;
+      const newPaid  = loan.originalBalance - newBal;
+
+      let celebration = null;
+      for (const m of LOAN_MILESTONES) {
+        if (prevPaid < m.amount && newPaid >= m.amount && !loan.milestonesReached.includes(m.amount)) {
+          loan.milestonesReached.push(m.amount);
+          celebration = m;
+        }
+      }
+
       saveLoan();
       renderLoan();
 
-      if (prevBal > 0 && loan.currentBalance === 0) {
-        celebrate('🎊', 'Loan Paid Off!', "Lauren's loan is completely paid off! That's incredible — you're officially debt-free on this one!");
+      if (celebration) {
+        if (celebration.amount >= loan.originalBalance || newBal === 0) {
+          celebrate('🏁', 'Both Loans Paid Off!', `You've paid off all ${$(loan.originalBalance)}! Both loans are completely cleared — you're debt-free! 🎉`);
+          launchConfetti(6000);
+        } else {
+          celebrate('🎯', 'First Loan Cleared!', `You've paid ${$(celebration.amount)}! The first loan is cleared — on to the finish line at ${$(loan.originalBalance)}!`);
+          launchConfetti(4500);
+        }
+      } else if (prevBal > 0 && newBal === 0) {
+        celebrate('🏁', 'Both Loans Paid Off!', `Lauren's loans are completely paid off! That's incredible — officially debt-free! 🎉`);
         launchConfetti(6000);
       }
     }
